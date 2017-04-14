@@ -1,0 +1,55 @@
+#include "services_dune.fcl"
+
+process_name: PhotonCount10KT
+
+services:
+{
+  
+  TFileService:           { fileName: "PhotonCount10KT.root" }
+
+  TimeTracker:            {}
+  
+  DetectorClocksService:  @local::dunefd_detectorclocks
+
+  Geometry:               @local::dunefd_geo
+
+  ExptGeoHelperInterface: @local::dune_geometry_helper
+
+  DatabaseUtil:           @local::dunefd_database
+
+} # services
+
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1 
+}
+
+# This is empty, because we're not writing any art::Events to an output file. 
+outputs:{}
+
+physics:
+{
+  analyzers:
+  {
+    PhotonCount10KT: 
+    {
+
+      module_type:    "PhotonCount10KT"
+
+      PhotLabel:      "ophit"
+
+      eLifetime:      3.0e-3    #seconds
+
+      eDriftVelocity: 1.6e5      #cm/Second  (.16cm/us -> cm/second)
+
+    }
+  }
+
+
+  analysis: [ PhotonCount10KT ]
+
+  end_paths: [ analysis ]
+}
+

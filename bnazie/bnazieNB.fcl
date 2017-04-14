@@ -1,0 +1,59 @@
+#include "services_dune.fcl"
+
+process_name: bnazieNB
+
+services:
+{
+  
+  TFileService:           { fileName: "bnazieNB.root" }
+
+  TimeTracker:            {}
+  
+  BackTracker:            @local::dune35t_backtracker
+ 
+  TimeService:            @local::dune35t_timeservice
+
+  Geometry:               @local::dune35t_geo
+
+  ExptGeoHelperInterface: @local::dune_geometry_helper
+
+  DatabaseUtil:           @local::dune35t_database
+
+} # services
+
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1 
+}
+
+# This is empty, because we're not writing any art::Events to an output file. 
+outputs:{}
+
+physics:
+{
+  analyzers:
+  {
+    bnazieNB: 
+    {
+
+      module_type:     "bnazieNB"
+
+      TruthLabel:      "largeant"
+
+      CheatLabel:       "hitcheat"
+
+      HitLabel:        "hit35t"
+
+      PhotLabel:  "opflash"
+
+    }
+  }
+
+
+  analysis: [ bnazieNB ]
+
+  end_paths: [ analysis ]
+}
+

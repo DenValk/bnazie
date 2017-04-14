@@ -1,0 +1,79 @@
+#include "services_dune.fcl"
+
+process_name: bnazie10ktSlicer
+
+services:
+{
+  
+  TFileService:           { fileName: "bnazie10ktSlicer.root" }
+
+  TimeTracker:            {}
+  
+  BackTracker:            @local::dunefd_backtracker
+ 
+  DetectorClocksService:  @local::dunefd_detectorclocks
+
+  Geometry:               @local::dunefd_geo
+
+  ExptGeoHelperInterface: @local::dune_geometry_helper
+
+  DatabaseUtil:           @local::dunefd_database
+
+} # services
+
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1 
+}
+
+# This is empty, because we're not writing any art::Events to an output file. 
+outputs:{}
+
+physics:
+{
+  analyzers:
+  {
+    bnazie10ktSlicer: 
+    {
+
+      module_type:    "bnazie10ktSlicer"
+
+      TruthLabel:     "largeant"
+
+      CheatLabel:     "dcheat"
+
+      HitLabel:       "hitfd"
+
+      PhotLabel:      "opflash"
+
+      RescaleOn:      false
+
+      AsymetryAmplitude: 1
+
+      xCorrection:    -400
+
+      yCorrection:    -610
+      
+      zCorrection:    3000
+
+      zOffset:        0
+
+      RescaleFile:    "surfaceImpurities.root"
+
+      RescaleTP3D:    "surfaceImpurities_vs_xyz"
+
+      eLifetime:      3.0e-3    #seconds
+
+      eDriftVelocity: 1.6e5      #cm/Second  (.16cm/us -> cm/second)
+
+    }
+  }
+
+
+  analysis: [ bnazie10ktSlicer ]
+
+  end_paths: [ analysis ]
+}
+

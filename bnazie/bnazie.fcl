@@ -1,0 +1,77 @@
+#include "services_dune.fcl"
+
+process_name: bnazie
+
+services:
+{
+  
+  TFileService:           { fileName: "bnazie.root" }
+
+  TimeTracker:            {}
+  
+  BackTracker:            @local::dune35t_backtracker
+ 
+  DetectorClocksService:  @local::dune35t_detectorclocks
+
+  Geometry:               @local::dune35t_geo
+
+  ExptGeoHelperInterface: @local::dune_geometry_helper
+
+  DatabaseUtil:           @local::dune35t_database
+
+} # services
+
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1 
+}
+
+# This is empty, because we're not writing any art::Events to an output file. 
+outputs:{}
+
+physics:
+{
+  analyzers:
+  {
+    bnazie: 
+    {
+
+      module_type:    "bnazie"
+
+      TruthLabel:     "largeant"
+
+      CheatLabel:     "dcheat"
+
+      HitLabel:       "hit35t"
+
+      PhotLabel:      "opflash"
+
+      rescaleOn:      false
+
+      xCorrection:    0
+
+      yCorrection:    0
+      
+      zCorrection:    0
+
+      zOffset:        0
+
+      RescaleFile:    "surfaceImpurities.root"
+
+      RescaleTP3D:    "surfaceImpurities_vs_xyz"
+
+      eLifetime:      3.0e-3    #seconds
+
+      eDriftVelocity: 1.6e5      #cm/Second  (.16cm/us -> cm/second)
+
+    }
+  }
+
+
+  analysis: [ bnazie ]
+
+  end_paths: [ analysis ]
+}
+

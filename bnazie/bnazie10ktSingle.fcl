@@ -1,0 +1,58 @@
+#include "services_dune.fcl"
+
+process_name: bnazie10ktSingle
+
+services:
+{
+  
+  TFileService:           { fileName: "bnazie10ktSingle.root" }
+
+  TimeTracker:            {}
+  
+  BackTracker:            @local::dunefd_backtracker
+ 
+  DetectorClocksService:  @local::dunefd_detectorclocks
+
+  Geometry:               @local::dunefd_geo
+
+  ExptGeoHelperInterface: @local::dune_geometry_helper
+
+  DatabaseUtil:           @local::dunefd_database
+
+} # services
+
+
+source:
+{
+  module_type: RootInput
+  maxEvents:  -1 
+}
+
+# This is empty, because we're not writing any art::Events to an output file. 
+outputs:{}
+
+physics:
+{
+  analyzers:
+  {
+    bnazie10ktSingle: 
+    {
+
+      module_type:    "bnazie10ktSingle"
+
+      TruthLabel:     "largeant"
+
+      HitLabel:       "hitfd"
+
+      PhotLabel:      "ophit"
+
+
+    }
+  }
+
+
+  analysis: [ bnazie10ktSingle ]
+
+  end_paths: [ analysis ]
+}
+

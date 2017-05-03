@@ -12,6 +12,8 @@
 
 // LArSoft includes
 #include "larsim/MCCheater/BackTracker.h"
+#include "larsim/MCCheater/PhotonBackTracker.h"
+
 //#include "larsim/Simulation/LArG4Parameters.h"
 #include "lardataobj/RecoBase/Hit.h"
 #include "lardataobj/RecoBase/OpHit.h"
@@ -83,6 +85,7 @@ namespace bnazie {
     std::string fPhotonsLabel;
     std::string fRescaleFile;
     std::string fRescaleObj;
+    std::string fPBTRLabel;
 
     TFile* rescaleSourceFile;
 
@@ -90,22 +93,22 @@ namespace bnazie {
     TTree* fMetricsNtuple;  
     TTree* fCheatMetricsNtuple;  
 
-    TProfile* fTSummedIntegralHist; 
-    TProfile* fTCheatSummedIntegralHist;
-    TProfile* fCSummedIntegralHist; 
-    TProfile* fCCheatSummedIntegralHist;
-    TProfile* fBSummedIntegralHist; 
-    TProfile* fBCheatSummedIntegralHist;
-    TProfile* fPeakAmpHist;
-    TProfile* fCheatPeakAmpHist;
-    TProfile* fSummedIntegralHist; 
-    TProfile* fCheatSummedIntegralHist;
-    TProfile* fPEvXHist;
+    TProfile* fTSummedIntegralProf; 
+    TProfile* fTCheatSummedIntegralProf;
+    TProfile* fCSummedIntegralProf; 
+    TProfile* fCCheatSummedIntegralProf;
+    TProfile* fBSummedIntegralProf; 
+    TProfile* fBCheatSummedIntegralProf;
+    TProfile* fPeakAmpProf;
+    TProfile* fCheatPeakAmpProf;
+    TProfile* fSummedIntegralProf; 
+    TProfile* fCheatSummedIntegralProf;
+    TProfile* fPEvXProf;
     TProfile3D* rescaleSourceProfile;
 
     TCanvas*  can6plot;
 
-    TH1D*     fPEHist;
+    TH1D*     fPEvXHist;
     TH1D*     fPENHist;
     TH1D*     fNumHitsHist;
     TH1D*     fCheatNumHitsHist;
@@ -129,6 +132,7 @@ namespace bnazie {
     //art::ServiceHandle<geo::Geometry> geom;
     art::ServiceHandle<art::TFileService> tfs;
     art::ServiceHandle<cheat::BackTracker> bt;
+    art::ServiceHandle<cheat::PhotonBackTracker> pbt;   
     //cheat:: bt = lar::providerFrom<cheat::BackTracker>();
     geo::GeometryCore const* geom =  lar::providerFrom<geo::Geometry>();
     //art::TFileService const* tfs  =  lar::providerFrom<art::TFileService>();
@@ -162,37 +166,38 @@ namespace bnazie {
     fCheatMetricsNtuple->Branch("CheatSumIntegral", &fCheatSumIntegral, "CheatSumIntegral/D");
     fCheatMetricsNtuple->Branch("CheatNumHits", &fCheatNumHits, "CheatNumHits/I");
 
-    fPeakAmpHist               = tfs->make<TProfile>("peakAmpHist",         ";Profile of Peak Amplitudes for each hit vs BackTracker Distance from APA (cm);",                36, -105.0, 255.0);
-    fCheatPeakAmpHist          = tfs->make<TProfile>("cheatPeakAmpHist",    ";Profile of Cheated Peak Amplitudes for each hit vs BackTracker Distance from APA (cm);",        36, -105.0, 255.0);
-    fTSummedIntegralHist       = tfs->make<TProfile>("tSummedIntHist",      ";Profile of the Summed Integral Charge (DUC) for each event vs Distance from APA (cm);",         36, -105.0, 255.0);
-    fTCheatSummedIntegralHist  = tfs->make<TProfile>("tCheatSummedIntHist", ";Profile of the Cheated Summed Integral Charge (DUC) for each event vs Distance from APA (cm);", 36, -105.0, 255.0);
-    fCSummedIntegralHist       = tfs->make<TProfile>("cSummedIntHist",      ";Profile of the Summed Integral Charge (DUC) for each event vs Distance from APA (cm);",         36, -105.0, 255.0);
-    fCCheatSummedIntegralHist  = tfs->make<TProfile>("cCheatSummedIntHist", ";Profile of the Cheated Summed Integral Charge (DUC) for each event vs Distance from APA (cm);", 36, -105.0, 255.0);
-    fBSummedIntegralHist       = tfs->make<TProfile>("bSummedIntHist",      ";Profile of the Summed Integral Charge (DUC) for each event vs Distance from APA (cm);",         36, -105.0, 255.0);
-    fBCheatSummedIntegralHist  = tfs->make<TProfile>("bCheatSummedIntHist", ";Profile of the Cheated Summed Integral Charge (DUC) for each event vs Distance from APA (cm);", 36, -105.0, 255.0);
-    fSummedIntegralHist        = tfs->make<TProfile>("summedIntHist",       ";Profile of the Summed Integral Charge (DUC) for each event vs Distance from APA (cm);",         36, -105.0, 255.0);
-    fCheatSummedIntegralHist   = tfs->make<TProfile>("cheatSummedIntHist",  ";Profile of the Cheated Summed Integral Charge (DUC) for each event vs Distance from APA (cm);", 36, -105.0, 255.0);
+    fPeakAmpProf               = tfs->make<TProfile>("peakAmpHist",         ";Profile of Peak Amplitudes for each hit vs BackTracker Distance from APA (cm);",                36, -105.0, 255.0);
+    fCheatPeakAmpProf          = tfs->make<TProfile>("cheatPeakAmpHist",    ";Profile of Cheated Peak Amplitudes for each hit vs BackTracker Distance from APA (cm);",        36, -105.0, 255.0);
+    fTSummedIntegralProf       = tfs->make<TProfile>("tSummedIntHist",      ";Profile of the Summed Integral Charge (DUC) for each event vs Distance from APA (cm);",         36, -105.0, 255.0);
+    fTCheatSummedIntegralProf  = tfs->make<TProfile>("tCheatSummedIntHist", ";Profile of the Cheated Summed Integral Charge (DUC) for each event vs Distance from APA (cm);", 36, -105.0, 255.0);
+    fCSummedIntegralProf       = tfs->make<TProfile>("cSummedIntHist",      ";Profile of the Summed Integral Charge (DUC) for each event vs Distance from APA (cm);",         36, -105.0, 255.0);
+    fCCheatSummedIntegralProf  = tfs->make<TProfile>("cCheatSummedIntHist", ";Profile of the Cheated Summed Integral Charge (DUC) for each event vs Distance from APA (cm);", 36, -105.0, 255.0);
+    fBSummedIntegralProf       = tfs->make<TProfile>("bSummedIntHist",      ";Profile of the Summed Integral Charge (DUC) for each event vs Distance from APA (cm);",         36, -105.0, 255.0);
+    fBCheatSummedIntegralProf  = tfs->make<TProfile>("bCheatSummedIntHist", ";Profile of the Cheated Summed Integral Charge (DUC) for each event vs Distance from APA (cm);", 36, -105.0, 255.0);
+    fSummedIntegralProf        = tfs->make<TProfile>("summedIntHist",       ";Profile of the Summed Integral Charge (DUC) for each event vs Distance from APA (cm);",         36, -105.0, 255.0);
+    fCheatSummedIntegralProf   = tfs->make<TProfile>("cheatSummedIntHist",  ";Profile of the Cheated Summed Integral Charge (DUC) for each event vs Distance from APA (cm);", 36, -105.0, 255.0);
     hitsDetected               = tfs->make< TH3D >  ("hitsDetectedPlot",    ";TH3 of the weighted average position for all Detected Hits (As given in Backtracker) ;",        36, -105.0, 255.0, 31, -260.0, 360.0, 33, -205.0, 455.0);
     fNumHitsHist               = tfs->make< TH1D >  ("numHits",             ";The number of hits detected at a distance x from the APA;",                                     36, -105.0, 255.0);
     fCheatNumHitsHist          = tfs->make< TH1D >  ("cheatNumHits",        ";The number of cheated hits detected at a distance x from the APA;",                             36, -105.0, 255.0);
     xHits                      = tfs->make< TH1D >  ("xHits",               ";The number of hits at different positions X;",                                                  36,-105,405);
     yHits                      = tfs->make< TH1D >  ("yHits",               ";The number of hits at different positions Y;",                                                  141, -705,705);
-    zHits                      = tfs->make< TH1D >  ("zHits",               ";The number of hits ad different positions Z:",                                                  211, -1055,1055);
+    zHits                      = tfs->make< TH1D >  ("zHits",               ";The number of hits at different positions Z;",                                                  211, -1055,1055);
+    fPEvXHist                  = tfs->make< TH1D >  ("nPEvX",               ";The numebr of PEs at different positions X;", 36, -105.0, 255.0);
 
     if(fRescale==0){can6plot = tfs->make<TCanvas>("VersionValidationPlots", "vv6plotspread", 2550, 3300);}
 
     ///////////////////////SET HISTOGRAM LABELS/////////////////
-    fPeakAmpHist->SetXTitle("Distance from APA (cm)");
-    fPeakAmpHist->SetYTitle("Peak Amplitude");
+    fPeakAmpProf->SetXTitle("Distance from APA (cm)");
+    fPeakAmpProf->SetYTitle("Peak Amplitude");
 
-    fCheatPeakAmpHist->SetXTitle("Distance from APA (cm)");
-    fCheatPeakAmpHist->SetYTitle("Cheated Peak Amplitude");
+    fCheatPeakAmpProf->SetXTitle("Distance from APA (cm)");
+    fCheatPeakAmpProf->SetYTitle("Cheated Peak Amplitude");
 
-    fSummedIntegralHist->SetXTitle("Distance from APA (cm)");
-    fSummedIntegralHist->SetYTitle("Summed Integral Charge per Event (Deposited Units Charge)");
+    fSummedIntegralProf->SetXTitle("Distance from APA (cm)");
+    fSummedIntegralProf->SetYTitle("Summed Integral Charge per Event (Deposited Units Charge)");
 
-    fCheatSummedIntegralHist->SetXTitle("Distance from APA (cm)");
-    fCheatSummedIntegralHist->SetYTitle("Cheated Summed Integral Charge per Event (Deposited Units Charge)");
+    fCheatSummedIntegralProf->SetXTitle("Distance from APA (cm)");
+    fCheatSummedIntegralProf->SetYTitle("Cheated Summed Integral Charge per Event (Deposited Units Charge)");
 
     fNumHitsHist->SetXTitle("Distance from APA (cm)");
     fNumHitsHist->SetYTitle("Number of hits detected.");
@@ -203,6 +208,9 @@ namespace bnazie {
     hitsDetected->SetXTitle("X Position ( cm )");
     hitsDetected->SetYTitle("Y Position ( cm )");
     hitsDetected->SetZTitle("Z Position ( cm )");
+
+    fPEvXHist->SetXTitle("X Position (cm)");
+    fPEvXHist->SetYTitle("Number if PE detected");
   }
   
 
@@ -230,13 +238,13 @@ namespace bnazie {
         can6plot->SetFixedAspectRatio(1);
         can6plot ->Divide(2,3);
         can6plot ->cd(1);    
-        fPeakAmpHist->Draw();
+        fPeakAmpProf->Draw();
         can6plot -> cd(2);    
-        fCheatPeakAmpHist->Draw();
+        fCheatPeakAmpProf->Draw();
         can6plot -> cd(3);
-        fSummedIntegralHist->Draw();
+        fSummedIntegralProf->Draw();
         can6plot -> cd(4);
-        fCheatSummedIntegralHist->Draw();
+        fCheatSummedIntegralProf->Draw();
         can6plot -> cd(5);
         fNumHitsHist->Draw();
         can6plot -> cd(6);
@@ -258,6 +266,7 @@ namespace bnazie {
     fCheatLabel             = parameterSet.get< std::string >("CheatLabel");
     fPhotonsLabel           = parameterSet.get< std::string >("PhotLabel");
     fRescale                = parameterSet.get< Bool_t     >("rescaleOn");
+    fPBTRLabel              = parameterSet.get< std::string >("PhotonBackTrackerLabel");
     if(fRescale==true){
       fxCorrection            = parameterSet.get< Double_t    >("xCorrection");
       fyCorrection            = parameterSet.get< Double_t    >("yCorrection");
@@ -344,6 +353,19 @@ namespace bnazie {
 	numGenerated++;
     }
 
+     //OpHit Section
+     for(const art::Ptr<recob::OpHit>& ptrOpHit: ophitlist){
+       try{
+         recob::OpHit opHit = *ptrOpHit;
+         std::vector<double> xyzOpPos = pbt->OpHitToXYZ(ptrOpHit);
+         double nPE = opHit.PE();
+         fPEvXHist->Fill(xyzOpPos.at(0), nPE);
+       }
+       catch(...){
+       }
+     }
+     
+     
      //Hit Section
 
      for ( std::vector< art::Ptr < recob::Hit > >::iterator hitIt = hitlist.begin(); hitIt != hitlist.end(); ++hitIt){
@@ -380,15 +402,15 @@ namespace bnazie {
              }
 
              if(sumStepWeight!=0){weightingFactor /= sumStepWeight;}else{weightingFactor=0;}
-             if(fPeakAmp!=0.0){fPeakAmpHist->Fill(hpos.at(0), fPeakAmp*weightingFactor );}
-             fSummedIntegralHist->Fill(hpos.at(0), fSumIntegral*weightingFactor );
-             if( hpos.at(1)<-555 ){fBSummedIntegralHist->Fill(hpos.at(0), fSumIntegral*weightingFactor);}
-             else if( hpos.at(2)<30 && hpos.at(2)>-30 ){fCSummedIntegralHist->Fill(hpos.at(0), fSumIntegral*weightingFactor);}
-             else if( hpos.at(2)>555 ) { fTSummedIntegralHist->Fill(hpos.at(0), fSumIntegral*weightingFactor);}
+             if(fPeakAmp!=0.0){fPeakAmpProf->Fill(hpos.at(0), fPeakAmp*weightingFactor );}
+             fSummedIntegralProf->Fill(hpos.at(0), fSumIntegral*weightingFactor );
+             if( hpos.at(1)<-555 ){fBSummedIntegralProf->Fill(hpos.at(0), fSumIntegral*weightingFactor);}
+             else if( hpos.at(2)<30 && hpos.at(2)>-30 ){fCSummedIntegralProf->Fill(hpos.at(0), fSumIntegral*weightingFactor);}
+             else if( hpos.at(2)>555 ) { fTSummedIntegralProf->Fill(hpos.at(0), fSumIntegral*weightingFactor);}
 
            }else{
-             if(fPeakAmp!=0.0){fPeakAmpHist->Fill(hpos.at(0), fPeakAmp);}
-             fSummedIntegralHist->Fill(hpos.at(0), fSumIntegral);
+             if(fPeakAmp!=0.0){fPeakAmpProf->Fill(hpos.at(0), fPeakAmp);}
+             fSummedIntegralProf->Fill(hpos.at(0), fSumIntegral);
            }  
 
            fMetricsNtuple->Fill();
@@ -419,8 +441,8 @@ namespace bnazie {
            hpos = bt->HitToXYZ(thisHit);
            fCheatNumHitsHist->Fill(hpos.at(0));
            fCheatMetricsNtuple->Fill();
-           fCheatPeakAmpHist->Fill(hpos.at(0), fCheatPeakAmp);
-           fCheatSummedIntegralHist->Fill(hpos.at(0), fCheatSumIntegral);
+           fCheatPeakAmpProf->Fill(hpos.at(0), fCheatPeakAmp);
+           fCheatSummedIntegralProf->Fill(hpos.at(0), fCheatSumIntegral);
            if(fRescale==true){
              Double_t weightingFactor = 0.0;
              Double_t sumStepWeight = 0.0;
@@ -439,15 +461,15 @@ namespace bnazie {
                binX -= 1;
              }
              if(sumStepWeight!=0){weightingFactor /= sumStepWeight;}else{weightingFactor=0;}
-             if(fCheatPeakAmp!=0.0){fCheatPeakAmpHist->Fill(hpos.at(0), fCheatPeakAmp*weightingFactor );}
-             fCheatSummedIntegralHist->Fill(hpos.at(0), fCheatSumIntegral*weightingFactor );
-             if( hpos.at(1)<-555 ){fBCheatSummedIntegralHist->Fill(hpos.at(0), fCheatSumIntegral*weightingFactor);}
-             else if( hpos.at(2)<30 && hpos.at(2)>-30 ){fCCheatSummedIntegralHist->Fill(hpos.at(0), fCheatSumIntegral*weightingFactor);}
-             else if( hpos.at(2)>555 ) { fTCheatSummedIntegralHist->Fill(hpos.at(0), fCheatSumIntegral*weightingFactor);}
+             if(fCheatPeakAmp!=0.0){fCheatPeakAmpProf->Fill(hpos.at(0), fCheatPeakAmp*weightingFactor );}
+             fCheatSummedIntegralProf->Fill(hpos.at(0), fCheatSumIntegral*weightingFactor );
+             if( hpos.at(1)<-555 ){fBCheatSummedIntegralProf->Fill(hpos.at(0), fCheatSumIntegral*weightingFactor);}
+             else if( hpos.at(2)<30 && hpos.at(2)>-30 ){fCCheatSummedIntegralProf->Fill(hpos.at(0), fCheatSumIntegral*weightingFactor);}
+             else if( hpos.at(2)>555 ) { fTCheatSummedIntegralProf->Fill(hpos.at(0), fCheatSumIntegral*weightingFactor);}
 
            }else{
-             if(fCheatPeakAmp!=0.0){fCheatPeakAmpHist->Fill(hpos.at(0), fCheatPeakAmp);}
-             fCheatSummedIntegralHist->Fill(hpos.at(0), fCheatSumIntegral);
+             if(fCheatPeakAmp!=0.0){fCheatPeakAmpProf->Fill(hpos.at(0), fCheatPeakAmp);}
+             fCheatSummedIntegralProf->Fill(hpos.at(0), fCheatSumIntegral);
            }  
         }
 

@@ -17,6 +17,8 @@ services:
 
   ExptGeoHelperInterface: @local::dune_geometry_helper
 
+  PhotonBackTracker:      @local::dunefd_photonbacktracker
+
   DatabaseUtil:           @local::dune35t_database
 
 } # services
@@ -46,7 +48,9 @@ physics:
 
       HitLabel:       "hit35t"
 
-      PhotLabel:      "opflash"
+      PhotLabel:      "ophit"
+
+      PhotonBackTrackerLabel:      "largeant"
 
       rescaleOn:      false
 
